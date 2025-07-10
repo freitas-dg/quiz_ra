@@ -9,7 +9,6 @@ import json
 import os
 import random
 
-# A classe CameraApp e a função overlay_with_alpha não mudam
 def overlay_with_alpha(background_img, overlay_img, x, y):
     h_overlay, w_overlay, _ = overlay_img.shape
     h_bg, w_bg, _ = background_img.shape
@@ -27,7 +26,6 @@ def overlay_with_alpha(background_img, overlay_img, x, y):
     return background_img
 
 class CameraApp:
-    # ... (código da classe CameraApp, sem alterações) ...
     def __init__(self, page: ft.Page):
         self.page = page
         self.is_running = False
@@ -38,7 +36,7 @@ class CameraApp:
         placeholder_pixel = np.zeros((1, 1, 4), dtype=np.uint8)
         _, buffer = cv2.imencode('.png', placeholder_pixel)
         b64_string_placeholder = base64.b64encode(buffer).decode('utf-8')
-        self.camera_image = ft.Image(src_base64=b64_string_placeholder, fit=ft.ImageFit.CONTAIN, expand=True)
+        self.camera_image = ft.Image(src_base64=b64_string_placeholder, fit=ft.ImageFit.CONTAIN, expand=True, border_radius=ft.border_radius.all(10))
         self.stack = ft.Stack(controls=[self.camera_image])
     
     def set_overlay_image(self, image_filename):
@@ -100,12 +98,12 @@ class CameraApp:
                 print(f"Erro no loop da câmera: {e}")
 
 class QuizManager:
+    
     def __init__(self, page, ar_app):
         self.page = page
         self.ar_app = ar_app
         self.scores_file = "scores.json"
         
-        # O banco de perguntas não muda
         self.full_quiz_data = [
             {"question": "Qual é o principal dispositivo para clicar e mover o cursor na tela?", "options": ["Mouse", "Teclado", "Impressora", "Monitor"], "correct_answer": "Mouse", "reward_image": "mouse.png", "difficulty": "facil"},
             {"question": "Qual componente é o 'cérebro' do computador?", "options": ["Processador (CPU)", "Placa de Som", "Memória RAM", "Gabinete"], "correct_answer": "Processador (CPU)", "reward_image": "processor.png", "difficulty": "facil"},
@@ -122,40 +120,79 @@ class QuizManager:
         ]
         self.reset_game_state()
 
-        # --- Definição dos Controles e Views da UI ---
-        self.high_score_text = ft.Text(italic=True, color=ft.Colors.AMBER)
-        self.high_score_container = ft.Container(self.high_score_text, top=10, right=10, padding=5, bgcolor=ft.Colors.with_opacity(0.3, ft.Colors.BLACK), border_radius=5)
-        self.username_field = ft.TextField(label="Digite seu nick", width=300, text_align=ft.TextAlign.CENTER, on_submit=self.show_difficulty_selection)
-        login_column = ft.Column([ft.Text("Trívia Challenge 😎", size=30, weight=ft.FontWeight.BOLD), self.username_field, ft.ElevatedButton("Próximo", on_click=self.show_difficulty_selection)], alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=20)
-        self.login_view = ft.Stack([login_column, self.high_score_container], expand=True)
-
-        self.difficulty_view = ft.Column([ft.Text("Escolha a Dificuldade", size=32),ft.ElevatedButton("Fácil", on_click=self.select_difficulty, data="facil", width=200, icon=ft.Icons.CHILD_CARE),ft.ElevatedButton("Médio", on_click=self.select_difficulty, data="medio", width=200, icon=ft.Icons.SCHOOL),ft.ElevatedButton("Difícil", on_click=self.select_difficulty, data="dificil", width=200, icon=ft.Icons.BOLT),],horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=15, visible=False)
         
-        self.username_display = ft.Text(weight=ft.FontWeight.BOLD, size=16); self.lives_text = ft.Text(size=24); self.score_text = ft.Text(size=18, weight=ft.FontWeight.BOLD)
-        self.question_text = ft.Text(size=22, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER)
-        self.answer_buttons = [ft.ElevatedButton(text=f"Opção {i+1}", width=300) for i in range(4)]
+        self.high_score_text = ft.Text(italic=True, color=ft.Colors.WHITE70)
+        self.high_score_container = ft.Container(
+            self.high_score_text, top=10, right=10, padding=8,
+            bgcolor=ft.Colors.BLACK26, border_radius=8, visible=True
+        )
+
+        
+        self.username_field = ft.TextField(
+            label="Digite seu nick", width=300, text_align=ft.TextAlign.CENTER,
+            on_submit=self.show_difficulty_selection, label_style=ft.TextStyle(color=ft.Colors.WHITE70),
+            text_style=ft.TextStyle(color=ft.Colors.WHITE), border_color=ft.Colors.WHITE54,
+            focused_border_color=ft.Colors.WHITE, cursor_color=ft.Colors.WHITE
+        )
+        self.login_view = ft.Column(
+            [
+                ft.Text(" Tech Trívia Challenge 😎", size=30, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+                self.username_field,
+                ft.ElevatedButton("Próximo", on_click=self.show_difficulty_selection,
+                                 bgcolor=ft.Colors.ORANGE, color=ft.Colors.WHITE)
+            ],
+            alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=20,
+            visible=True
+        )
+
+        
+        self.difficulty_view = ft.Column(
+            [
+                ft.Text("Escolha a Dificuldade", size=32, color=ft.Colors.WHITE),
+                ft.ElevatedButton("Fácil", on_click=self.select_difficulty, data="facil", width=200,
+                                 icon=ft.Icons.CHILD_CARE, bgcolor=ft.Colors.GREEN, color=ft.Colors.WHITE),
+                ft.ElevatedButton("Médio", on_click=self.select_difficulty, data="medio", width=200,
+                                 icon=ft.Icons.SCHOOL, bgcolor=ft.Colors.LIGHT_BLUE_500, color=ft.Colors.WHITE),
+                ft.ElevatedButton("Difícil", on_click=self.select_difficulty, data="dificil", width=200,
+                                 icon=ft.Icons.BOLT, bgcolor=ft.Colors.RED, color=ft.Colors.WHITE),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER, horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=15, visible=False
+        )
+        
+        self.username_display = ft.Text(weight=ft.FontWeight.BOLD, size=16, color=ft.Colors.WHITE70)
+        self.lives_text = ft.Text(size=24)
+        self.score_text = ft.Text(size=18, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE)
+        self.question_text = ft.Text(size=22, weight=ft.FontWeight.BOLD, text_align=ft.TextAlign.CENTER, color=ft.Colors.WHITE)
+        
+        answer_button_style = ft.ButtonStyle(
+            color=ft.Colors.WHITE, bgcolor=ft.Colors.WHITE24,
+            shape=ft.RoundedRectangleBorder(radius=8),
+        )
+        self.answer_buttons = [ft.ElevatedButton(text=f"Opção {i+1}", width=300, style=answer_button_style) for i in range(4)]
+        
         top_bar = ft.Row([ft.Column([self.username_display, self.lives_text]), self.score_text], alignment=ft.MainAxisAlignment.SPACE_BETWEEN)
-        self.quiz_view = ft.Column([top_bar, self.question_text, ft.Column(self.answer_buttons, spacing=5, horizontal_alignment=ft.CrossAxisAlignment.STRETCH)], alignment=ft.MainAxisAlignment.SPACE_AROUND, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False, expand=True)
+        self.quiz_view = ft.Column(
+            [top_bar, self.question_text, ft.Column(self.answer_buttons, spacing=5, horizontal_alignment=ft.CrossAxisAlignment.STRETCH)],
+            alignment=ft.MainAxisAlignment.SPACE_AROUND, horizontal_alignment=ft.CrossAxisAlignment.CENTER, visible=False, expand=True
+        )
+        
         self.next_question_button = ft.ElevatedButton("Próxima Pergunta", icon=ft.Icons.ARROW_FORWARD, on_click=self.next_question)
         self.ar_view_container = ft.Stack([self.ar_app.stack, ft.Container(content=self.next_question_button, alignment=ft.alignment.bottom_center, padding=20)], expand=True, visible=False)
-        self.final_message = ft.Text(size=32); self.final_score_text = ft.Text(size=28, text_align=ft.TextAlign.CENTER); self.play_again_button = ft.ElevatedButton("Jogar Novamente", on_click=self.reset_quiz)
+        self.final_message = ft.Text(size=32)
+        self.final_score_text = ft.Text(size=28, text_align=ft.TextAlign.CENTER, color=ft.Colors.BLUE_GREY_700)
+        self.play_again_button = ft.ElevatedButton("Jogar Novamente", on_click=self.reset_quiz)
         self.final_view = ft.Column([self.final_message, self.final_score_text, self.play_again_button], horizontal_alignment=ft.CrossAxisAlignment.CENTER, spacing=20, visible=False)
-
+        
         self.load_and_display_high_score()
 
-    # --- Lógica do Jogo ---
     def load_scores(self):
-        """Carrega todos os scores do arquivo JSON."""
-        if not os.path.exists(self.scores_file):
-            return []
+        if not os.path.exists(self.scores_file): return []
         with open(self.scores_file, 'r') as f:
-            try:
-                return json.load(f)
-            except json.JSONDecodeError:
-                return []
+            try: return json.load(f)
+            except json.JSONDecodeError: return []
 
     def is_username_taken(self, username):
-        """Verifica se um nome de usuário já existe na lista de scores."""
         scores = self.load_scores()
         return any(score['username'].lower() == username.lower() for score in scores)
 
@@ -173,18 +210,14 @@ class QuizManager:
         username = self.username_field.value.strip()
         if not username:
             self.username_field.error_text = "Por favor, digite um nick!"; self.page.update(); return
-        
-        # VALIDAÇÃO DE NOME DE USUÁRIO
         if self.is_username_taken(username):
             self.username_field.error_text = f"O nick '{username}' já existe. Tente outro."; self.page.update(); return
-
         self.username = username
         self.login_view.visible = False
+        self.high_score_container.visible = False # Esconde o recorde
         self.difficulty_view.visible = True
-        self.high_score_container.visible = False
         self.page.update()
 
-    # ... (O resto dos métodos permanecem os mesmos, já estão robustos) ...
     def select_difficulty(self, e):
         self.selected_difficulty = e.control.data
         self.current_quiz_questions = [q for q in self.full_quiz_data if q['difficulty'] == self.selected_difficulty]
@@ -201,51 +234,74 @@ class QuizManager:
         options = list(question_data["options"]); random.shuffle(options)
         correct_answer = question_data["correct_answer"]
         for i, btn in enumerate(self.answer_buttons):
-            btn.text = options[i]; btn.color = None; btn.disabled = False
-            btn.on_click = self.show_ar_reward if options[i] == correct_answer else self.handle_wrong_answer
+            btn.text = options[i]; btn.data = options[i]
+            btn.style.bgcolor = ft.Colors.WHITE24
+            btn.disabled = False
+            btn.on_click = lambda ev, ans=options[i]: self.check_answer(ev, ans, correct_answer)
         self.page.update()
 
-    def handle_wrong_answer(self, e):
-        self.lives -= 1
-        self.disable_all_buttons(); e.control.color = ft.Colors.RED
-        self.page.update()
-        time.sleep(1.5)
-        if self.lives == 0: self.show_final_screen(game_over=True)
-        else: self.next_question(None)
+    def check_answer(self, e, chosen_answer, correct_answer):
+        self.disable_all_buttons()
+        if chosen_answer == correct_answer:
+            e.control.style.bgcolor = ft.Colors.GREEN
+            self.score += 5
+            self.page.update()
+            time.sleep(0.75)
+            self.show_ar_reward()
+        else:
+            e.control.style.bgcolor = ft.Colors.RED
+            self.lives -= 1
+            self.page.update()
+            time.sleep(1.5)
+            if self.lives == 0:
+                self.show_final_screen(game_over=True)
+            else:
+                self.next_question(None)
 
-    def show_ar_reward(self, e):
-        self.score += 5
-        self.disable_all_buttons(); e.control.color = ft.Colors.GREEN
-        self.page.update()
+    def show_ar_reward(self):
+        self.page.bgcolor = None
+        self.page.gradient = ft.LinearGradient(
+            begin=ft.alignment.top_center, end=ft.alignment.bottom_center,
+            colors=[ft.Colors.LIGHT_BLUE_100, ft.Colors.BLUE_GREY_50],
+        )
         reward_image_filename = self.current_quiz_questions[self.current_question_index]["reward_image"]
         if not self.ar_app.set_overlay_image(reward_image_filename):
             self.page.snack_bar = ft.SnackBar(ft.Text(f"Erro ao carregar a imagem!"), bgcolor=ft.Colors.RED)
             self.page.snack_bar.open = True; self.page.update()
             time.sleep(0.75); self.next_question(None)
             return
-        time.sleep(0.75)
+        
         self.quiz_view.visible = False
         self.ar_view_container.visible = True
         self.ar_app.start(); self.page.update()
     
     def next_question(self, e):
+        self.page.gradient = None
+        self.page.bgcolor = ft.Colors.DEEP_PURPLE_400
+        
         self.ar_app.stop()
         self.ar_view_container.visible = False
         if self.current_question_index < len(self.current_quiz_questions) - 1:
             self.current_question_index += 1
-            self.update_quiz_view()
             self.quiz_view.visible = True
+            self.update_quiz_view()
         else:
             self.show_final_screen(game_over=False)
         self.page.update()
 
     def show_final_screen(self, game_over=False):
+        self.page.gradient = ft.LinearGradient(
+            begin=ft.alignment.top_center, end=ft.alignment.bottom_center,
+            colors=[ft.Colors.LIGHT_BLUE_100, ft.Colors.BLUE_GREY_50],
+        )
+        self.page.bgcolor = None
+        
         self.quiz_view.visible = False; self.ar_view_container.visible = False; self.final_view.visible = True
         if game_over:
             self.final_message.value = "Game Over!"; self.final_message.color = ft.Colors.RED
             self.final_score_text.value = f"{self.username}, você ficou com {self.score} pontos."
         else:
-            self.final_message.value = "Quiz Finalizado!"; self.final_message.color = ft.Colors.GREEN
+            self.final_message.value = "Quiz Finalizado!"; self.final_message.color = ft.Colors.GREEN_700
             self.final_score_text.value = f"Parabéns, {self.username}! Pontuação final: {self.score}"
             self.save_score()
         self.page.update()
@@ -257,8 +313,12 @@ class QuizManager:
         with open(self.scores_file, 'w') as f: json.dump(scores, f, indent=4)
 
     def reset_quiz(self, e):
+        self.page.gradient = None
+        self.page.bgcolor = ft.Colors.DEEP_PURPLE_400
+        
         self.reset_game_state(); self.username_field.value = ""; self.username_field.error_text = None
-        self.final_view.visible = False; self.login_view.visible = True
+        self.final_view.visible = False
+        self.login_view.visible = True
         self.high_score_container.visible = True
         self.load_and_display_high_score()
 
@@ -266,48 +326,84 @@ class QuizManager:
         for btn in self.answer_buttons: btn.disabled = True
 
 def main(page: ft.Page):
-    page.title = "Trívia Challenge"
+    page.title = " Tech Trívia Challenge"
     page.window_width = 800
     page.window_height = 500
-    page.padding = 0 # Remove padding para o gradiente preencher tudo
-
-    # --- NOVO TEMA DE CORES ---
-    page.theme = ft.Theme(
-        color_scheme=ft.ColorScheme(
-            primary=ft.Colors.CYAN_700,
-            primary_container=ft.Colors.CYAN_800,
-        )
-    )
-    # Adiciona um gradiente de fundo
+    page.padding = 0
+    page.theme = ft.Theme(color_scheme=ft.ColorScheme(primary=ft.Colors.BLUE_600))
+    page.bgcolor = ft.Colors.DEEP_PURPLE_400
     page.vertical_alignment = ft.MainAxisAlignment.CENTER
     page.horizontal_alignment = ft.CrossAxisAlignment.CENTER
-    page.bgcolor = ft.Colors.BLUE_GREY_900
-
+    
     ar_app = CameraApp(page)
     quiz_manager = QuizManager(page, ar_app)
 
-    def on_window_event(e):
-        if e.data == "close":
-            ar_app.stop()
-            page.window_destroy()
-    page.on_window_event = on_window_event
-    
-    # Envolve todas as views em um container principal para aplicar o padding
-    main_container = ft.Container(
+
+    # Conteúdo principal que será centralizado
+    main_content = ft.Container(
         content=ft.Stack(
             [
                 quiz_manager.login_view,
                 quiz_manager.difficulty_view,
                 quiz_manager.quiz_view,
                 quiz_manager.ar_view_container,
-                quiz_manager.final_view
+                quiz_manager.final_view,
             ]
         ),
         padding=20,
+        alignment=ft.alignment.center,
+        expand=True
+    )
+
+
+    app_layout = ft.Stack(
+        [
+            main_content,
+            quiz_manager.high_score_container, 
+        ],
         expand=True
     )
     
-    page.add(main_container)
+    splash_view = ft.Column(
+        [
+            ft.Icon(ft.Icons.BOLT_ROUNDED, color=ft.Colors.WHITE, size=80),
+            ft.Text("Tech Trívia Challenge", size=30, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE),
+            ft.ProgressRing(color=ft.Colors.WHITE, width=24, height=24, stroke_width=3)
+        ],
+        alignment=ft.MainAxisAlignment.CENTER,
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        spacing=20
+    )
+    splash_container = ft.Container(
+        content=splash_view,
+        expand=True,
+        alignment=ft.alignment.center
+    )
+    
+
+    switcher = ft.AnimatedSwitcher(
+        content=splash_container,
+        transition=ft.AnimatedSwitcherTransition.FADE,
+        duration=500,
+        switch_in_curve=ft.AnimationCurve.EASE_IN,
+        switch_out_curve=ft.AnimationCurve.EASE_OUT,
+    )
+
+    def show_main_app():
+        time.sleep(3)
+        switcher.content = app_layout
+        page.update()
+    
+    def on_window_event(e):
+        if e.data == "close":
+            ar_app.stop()
+            page.window_destroy()
+    page.on_window_event = on_window_event
+    
+    page.add(switcher)
+    
+    threading.Thread(target=show_main_app, daemon=True).start()
+    
     page.update()
 
 ft.app(target=main, assets_dir="assets")
