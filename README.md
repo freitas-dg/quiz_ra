@@ -1,8 +1,8 @@
-# Tech Trívia Challenge com Realidade Aumentada
+// Tech Trívia Challenge com Realidade Aumentada
 
 Este projeto é um **quiz**, utilizando a detecção de mãos com webcam.
 
-# Tecnologias Utilizadas
+Tecnologias Utilizadas
 
 - [Python]
 - [Flet]
@@ -10,26 +10,26 @@ Este projeto é um **quiz**, utilizando a detecção de mãos com webcam.
 - [MediaPipe]
 - NumPy e outras bibliotecas auxiliares
 
-# Como Executar o Projeto
+// Como Executar o Projeto
 
-# 1. Pré-requisitos
+1. Pré-requisitos
 
 - Python 3.10 ou superior instalado
 - Webcam funcionando
 
-# 2. Instale as dependências
+2 Instale as Dependencias
 
 - Abra o terminal (CMD ou PowerShell) dentro da pasta do projeto e execute:
 
 ```pip install flet opencv-python mediapipe numpy
 
 
-# 3.  Execute o Projeto
+3.  Execute o Projeto
 
 - python main.py
 
 
-# 4. Como Jogar
+4. Como Jogar
 
 - Digite um nick (nome de jogador).
 
@@ -49,3 +49,4 @@ Grupo: Ezequiel Pacheco dos Santos Machado
        Dayene Salgueiro
        Karine Fontinelles
 
+```
